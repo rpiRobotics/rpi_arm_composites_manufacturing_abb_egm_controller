@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+
+from rpi_abb_irc5 import EGM
+import rospy
+from arm_composites_manufacturing_controller_adapters import XboxGamepadAdapter
+from general_robotics_toolbox import urdf
+from arm_composites_manufacturing_controller import Controller
+from sensor_msgs.msg import JointState
+from geometry_msgs.msg import WrenchStamped
+from rpi_ati_net_ft import NET_FT
+
+def main():    
+       
+    ts = 4e-3
+       
+    rospy.init_node('arm_composites_manufacturing_controller')
+    
+    robot = urdf.robot_from_parameter_server()
+    
+    controller=Controller(robot,ts)
+    
+    rate = rospy.Rate(250)
+    
+    egm=EGM()
+    gamepad=XboxGamepadAdapter()
+    
+    netft_host=None
+    if rospy.has_param("~netft_host"):
+        netft_host=rospy.get_param("~netft_host")
+    
+    if netft_host is not None and len(netft_host) > 0:
+        netft=NET_FT(netft_host)
+        netft.set_tare_from_ft()
+        netft.start_streaming()
+        netft_pub=rospy.Publisher("netft_data", WrenchStamped, queue=10)
+    else:
+        netft=None
+        netft_pub=None
+        
+    try:
+        while True:
+            
+            res, state = egm.receive_from_robot(0.25)
+            if not res:
+                controller.error_step("No data received from robot")
+            elif not state.motors_on or not state.rapid_running:
+                controller.error_step("RAPID not running or motors disabled")
+            else:
+                joint_vel, cmd_vel, trajectory_vel, cmd_halt = gamepad.current_command()
+                
+                ft = None
+                if netft is not None:
+                    ft_res, ft1= netft.try_read_ft_streaming(0)
+                    if ft_res:
+                        ft=ft1
+                
+                command_joints = controller.step(state.joint_angles, joint_vel, cmd_vel, trajectory_vel, cmd_halt, ft)
+                
+                egm.send_to_robot(command_joints)
+                
+                if netft_pub is not None and ft is not None:
+                    netft_pub.publish(fill_wrench_stamped_msg(ft))
+                                        
+                rate.sleep()
+            
+    except KeyboardInterrupt:
+        pass
+
+def fill_joint_state_msg(joint_angles):
+    js = JointState()        
+    js.header.stamp = rospy.Time.now()
+    js.name = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6']      
+    js.position = joint_angles  
+    js.velocity = [0,0,0,0,0,0]
+    js.effort = [0,0,0,0,0,0]
+    return js
+
+def fill_wrench_stamped_msg(ft):
+    w=WrenchStamped()
+    w.header.stamp = rospy.Time.now()
+    w.wrench.torque.x=ft[0]
+    w.wrench.torque.y=ft[1]
+    w.wrench.torque.z=ft[2]
+    w.wrench.force.x=ft[3]
+    w.wrench.force.y=ft[4]
+    w.wrench.force.z=ft[5]
+    return w
+
+if __name__ == '__main__':
+    main()

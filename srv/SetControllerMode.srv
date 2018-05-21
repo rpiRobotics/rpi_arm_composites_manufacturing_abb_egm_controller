@@ -1,0 +1,5 @@
+ControllerMode mode
+float64 speed_scalar
+float64[] force_torque_stop_threshold
+---
+bool success

@@ -1,0 +1,11 @@
+Header header
+ControllerMode mode
+string error_msg
+string[] joint_name
+float64[] joint_position
+float64[] joint_command_position
+geometry_msgs/Wrench ft_wrench
+bool ft_wrench_valid
+bool trajectory_valid
+float64 trajectory_time
+float64 trajectory_max_time
