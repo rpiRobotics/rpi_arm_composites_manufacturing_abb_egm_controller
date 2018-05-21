@@ -38,7 +38,7 @@ def main():
         netft_pub=None
         
     try:
-        while True:
+        while not rospy.is_shutdown():
             
             res, state = egm.receive_from_robot(0.25)
             if not res:

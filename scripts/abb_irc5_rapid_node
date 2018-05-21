@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 from rpi_abb_irc5 import RAPID
 from rpi_arm_composites_manufacturing_abb_egm_controller.srv import \
@@ -10,6 +12,7 @@ from rpi_arm_composites_manufacturing_abb_egm_controller.srv import \
     
 from rpi_arm_composites_manufacturing_abb_egm_controller.msg import RapidEventLogMessage
 from datetime import datetime
+from distutils.util import strtobool
 
 import traceback
 
@@ -109,8 +112,7 @@ if __name__ == '__main__':
     
     rospy.init_node('abb_irc5_rapid')
     
-    #robot_host=rospy.get_param('~abb_irc5_host')
-    robot_host='http://192.168.11.58'
+    robot_host=rospy.get_param('~abb_irc5_uri')    
     
     rapid=RAPID(robot_host)
     
@@ -122,3 +124,14 @@ if __name__ == '__main__':
     rospy.Service('rapid/read_event_log', RapidReadEventLog, rapid_read_event_log)
     
     rospy.spin()
+    
+    
+    #Stop RAPID on node shutdown    
+    try:
+        print rospy.get_param('~abb_irc5_rapid_auto_stop')
+        if bool(strtobool(str(rospy.get_param('~abb_irc5_rapid_auto_stop')))):
+            rapid.stop()
+    except:
+        traceback.print_exc()
+        pass
+    
