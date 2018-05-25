@@ -60,7 +60,7 @@ def main():
         netft=NET_FT(netft_host)
         netft.set_tare_from_ft()
         netft.start_streaming()
-        netft_pub=rospy.Publisher("netft_data", WrenchStamped, queue=10)
+        netft_pub=rospy.Publisher("netft_data", WrenchStamped, queue_size=10)
     else:
         netft=None
         netft_pub=None
@@ -78,7 +78,7 @@ def main():
                 
                 ft = None
                 if netft is not None:
-                    ft_res, ft1= netft.try_read_ft_streaming(0)
+                    ft_res, ft1, ft_status_code= netft.try_read_ft_streaming(0)
                     if ft_res:
                         ft=ft1
                 

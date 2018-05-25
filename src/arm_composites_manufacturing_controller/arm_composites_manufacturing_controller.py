@@ -87,6 +87,7 @@ class Controller(object):
             
             if self._check_ft_threshold(ft):
                 if self._mode == 0:
+                    self._trajectory.abort_trajectory()
                     pass
                 elif self._mode == 1:
                     if joint_cmd_vel is not None:
@@ -114,6 +115,7 @@ class Controller(object):
                     pass
             else:
                 self._trajectory.abort_trajectory()
+                self._mode = 0
             
             
             joint_state_msg = fill_joint_state_msg(self._current_joint_angles,now)            
@@ -162,13 +164,13 @@ class Controller(object):
             self._ft_threshold=np.array(req.force_torque_stop_threshold)
             return ret
         
-    def _check_ft_threshold(self, ft):
-        if ft is None:
-            return True
+    def _check_ft_threshold(self, ft):        
         if self._ft_threshold is None:
             return True
         if np.shape(self._ft_threshold) != (6,):
             return True
+        if ft is None:
+            return False # Stop if invalid wrench
         if np.all(self._ft_threshold < 1e-6):
             return True
         if np.any(np.logical_and((self._ft_threshold > 1e-6), (np.abs(ft) > self._ft_threshold))):
