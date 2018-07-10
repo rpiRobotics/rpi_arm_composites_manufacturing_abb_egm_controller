@@ -133,6 +133,9 @@ class arm_composites_manufacturing_controller_commander(object):
     def plan(self, pose_target):
         
         joint_target=self.compute_ik(pose_target)
+        self.plan_joint_target(joint_target)
+    
+    def plan_joint_target(self, joint_target):
         
         self.moveit_group.set_joint_value_target(joint_target)
         
@@ -161,10 +164,19 @@ class arm_composites_manufacturing_controller_commander(object):
     def plan_and_move(self, pose_target):
         plan1=self.plan(pose_target)
         self.execute(plan1)
-        
+    
+    def plan_joint_target_and_move(self, joint_target):
+        plan1=self.plan_joint_target(joint_target)
+        self.execute(plan1)
+    
     def async_plan_and_move(self, pose_target, result_cb):                
         
         self._async_execute_func(lambda: self.plan_and_move(pose_target), result_cb)             
+    
+    def async_plan_joint_target_and_move(self, joint_target, result_cb):                
+        
+        self._async_execute_func(lambda: self.plan_joint_target_and_move(joint_target), result_cb)             
+    
     
     def compute_cartesian_path(self, pose_target, jump_threshold=0.01, eef_step=0.0, avoid_collisions=True):
         
@@ -206,4 +218,6 @@ class arm_composites_manufacturing_controller_commander(object):
             thread=threading.Thread(target = t)
             thread.daemon=True
             thread.start()
-
+    
+    def stop_move(self):
+        self.moveit_group.stop()
