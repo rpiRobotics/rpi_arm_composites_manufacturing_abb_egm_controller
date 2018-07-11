@@ -133,7 +133,7 @@ class arm_composites_manufacturing_controller_commander(object):
     def plan(self, pose_target):
         
         joint_target=self.compute_ik(pose_target)
-        self.plan_joint_target(joint_target)
+        return self.plan_joint_target(joint_target)
     
     def plan_joint_target(self, joint_target):
         
