@@ -9,11 +9,12 @@ MODULE EGM_slave
         
     PERS tooldata UISpenholder:=[TRUE,[[0,0,114.25],[1,0,0,0]],[1,[-0.095984607,0.082520613,38.69176324],[1,0,0,0],0,0,0]];
     TASK PERS wobjdata wobjBordN:=[FALSE,TRUE,"",[[0,0,0],[1,0,0,0]],[[150,-500,8],[0.707106781,0,0,-0.707106781]]];
-    
-    VAR pose posecorTable:=[[0,0,0],[1,0,0,0]];
-    VAR pose posesenTable:=[[0,0,0],[1,0,0,0]];
-
-    PROC main()        
+       
+    PROC main()
+        VAR jointtarget joints;
+        joints:= CJointT();
+        joints.robax.rax_6 := joints.robax.rax_6 + 0.001;
+        MoveAbsj joints, v100, fine, UISpenholder;
         testuc_UDP; 
     ENDPROC
   
@@ -37,21 +38,22 @@ MODULE EGM_slave
         ENDIF  
     ENDPROC
               
-        PROC runEGM()
-            
-            EGMActJoint egmID1 \Tool:=UISpenholder \WObj:=wobj0, \J1:=egm_minmax_joint1 \J2:=egm_minmax_joint1 \J3:=egm_minmax_joint1
-            \J4:=egm_minmax_joint1 \J5:=egm_minmax_joint1 \J6:=egm_minmax_joint1 \LpFilter:=100 \Samplerate:=4 \MaxPosDeviation:=1000 \MaxSpeedDeviation:=1000;
-            
-            EGMRunJoint egmID1, EGM_STOP_HOLD \J1 \J2 \J3 \J4 \J5 \J6 \CondTime:=2000000 \RampInTime:=0.05 \PosCorrGain:=1;
-            
-            egmSt1:=EGMGetState(egmID1);
-        ERROR
-            !If error is "No data from the UdpUc device", wait 5 seconds and try again
-            IF ERRNO = ERR_UDPUC_COMM THEN
-                TPWrite "EGM UDP Command Timeout, Restarting!";
-                WaitTime 5;
-                ExitCycle;
-            ENDIF
-        ENDPROC
+    PROC runEGM()
+        
+        EGMActJoint egmID1 \Tool:=UISpenholder \WObj:=wobj0, \J1:=egm_minmax_joint1 \J2:=egm_minmax_joint1 \J3:=egm_minmax_joint1
+        \J4:=egm_minmax_joint1 \J5:=egm_minmax_joint1 \J6:=egm_minmax_joint1 \LpFilter:=100 \Samplerate:=4 \MaxPosDeviation:=1000 \MaxSpeedDeviation:=1000;
+        
+        EGMRunJoint egmID1, EGM_STOP_HOLD \J1 \J2 \J3 \J4 \J5 \J6 \CondTime:=2000000 \RampInTime:=0.05 \PosCorrGain:=1;
+        
+        egmSt1:=EGMGetState(egmID1);
+    ERROR
+    
+        IF ERRNO = ERR_UDPUC_COMM THEN
+            TPWrite "EGM UDP Command Timeout, Restarting!";
+            WaitTime 5;
+            ExitCycle;
+        ENDIF
+    ENDPROC
+	
  
 ENDMODULE
