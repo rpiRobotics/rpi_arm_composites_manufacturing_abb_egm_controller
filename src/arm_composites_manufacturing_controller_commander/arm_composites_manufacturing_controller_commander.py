@@ -95,9 +95,9 @@ class arm_composites_manufacturing_controller_commander(object):
     def compute_ik(self, pose, current_joint = None):
         
         if isinstance(pose, PoseStamped):
-            pose=rox_msg.msg2pose(pose.pose)
+            pose=rox_msg.msg2transform(pose.pose)
         elif isinstance(pose, Pose):
-            pose=rox_msg.msg2pose(pose)
+            pose=rox_msg.msg2transform(pose)
                
         joint_targets=rox.robot6_sphericalwrist_invkin(self.rox_robot, pose)
 
@@ -182,8 +182,8 @@ class arm_composites_manufacturing_controller_commander(object):
         
         if isinstance(pose_target, PoseStamped):
             pose_target=pose_target.pose
-        elif isinstance(pose_target,rox.Pose):
-            pose_target=rox_msg.pose2msg(pose_target)
+        elif isinstance(pose_target,rox.Transform):
+            pose_target=rox_msg.transform2pose_msg(pose_target)
             
         (path, fraction) = self.moveit_group.compute_cartesian_path([pose_target], jump_threshold,\
                                                                     eef_step, avoid_collisions)
