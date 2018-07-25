@@ -155,7 +155,9 @@ class arm_composites_manufacturing_controller_commander(object):
     def execute(self, plan):
         if rospy.is_shutdown():
             raise Exception("Node shutdown")
-        self.moveit_group.execute(plan)
+        res = self.moveit_group.execute(plan)
+        if not res:
+            raise Exception("Path execution failed")
     
     def async_execute(self, plan, result_cb):
                 
